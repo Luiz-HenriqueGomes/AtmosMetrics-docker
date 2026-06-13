@@ -1,10 +1,10 @@
 // ============================================================
 // AtmosMetrics — API Service
-// Camada de comunicação com o backend FastAPI em localhost:8000
+// Camada de comunicação com o backend FastAPI
 // Suporta dados nacionais (INPE) e globais (NASA FIRMS, Open-Meteo, OpenWeatherMap)
 // ============================================================
 
-const BASE_URL = 'http://localhost:8000/api/v1';
+const BASE_URL = '/api/v1';
 
 // ---- Interfaces de Resposta ----
 
@@ -314,5 +314,5 @@ export const api = {
   },
 
   // Health Check
-  getHealth: () => fetch('http://localhost:8000/').then(r => r.json() as Promise<HealthResponse>),
+  getHealth: () => fetch('/api/health').then(r => r.json() as Promise<HealthResponse>),
 };
