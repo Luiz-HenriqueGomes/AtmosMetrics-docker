@@ -279,10 +279,7 @@ export default function ConfiguracoesPage() {
             <span className="about-label">Projeto</span>
             <span className="about-value">AtmosMetrics — Dev Web II</span>
           </div>
-          <div className="about-item">
-            <span className="about-label">Desenvolvedores</span>
-            <span className="about-value">Luiz Henrique Gomes de Oliveira · Luiz Hélio Fim Filho</span>
-          </div>
+
           <div className="about-item">
             <span className="about-label">Stack</span>
             <span className="about-value">React 19 + FastAPI + PostgreSQL + PostGIS · Open-Meteo · OpenWeatherMap · NASA FIRMS</span>

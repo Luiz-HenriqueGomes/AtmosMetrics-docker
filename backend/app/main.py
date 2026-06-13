@@ -40,9 +40,7 @@ app = FastAPI(
         "e qualidade do ar (OpenWeatherMap) processados via Star Schema PostGIS."
     ),
     version="2.0.0",
-    contact={
-        "name": "Luiz Henrique Gomes de Oliveira & Luiz Hélio Fim Filho",
-    },
+
     lifespan=lifespan,
 )
 
