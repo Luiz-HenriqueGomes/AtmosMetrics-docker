@@ -7,20 +7,22 @@ interface Props {
 interface State {
   hasError: boolean;
   error: Error | null;
+  errorInfo: React.ErrorInfo | null;
 }
 
 class ErrorBoundary extends Component<Props, State> {
   constructor(props: Props) {
     super(props);
-    this.state = { hasError: false, error: null };
+    this.state = { hasError: false, error: null, errorInfo: null };
   }
 
-  static getDerivedStateFromError(error: Error): State {
+  static getDerivedStateFromError(error: Error): Partial<State> {
     return { hasError: true, error };
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     console.error('ErrorBoundary caught:', error, errorInfo);
+    this.setState({ errorInfo });
   }
 
   render() {
@@ -31,7 +33,7 @@ class ErrorBoundary extends Component<Props, State> {
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          height: '100vh',
+          minHeight: '100vh',
           background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
           color: '#e2e8f0',
           fontFamily: 'Inter, system-ui, sans-serif',
@@ -44,9 +46,28 @@ class ErrorBoundary extends Component<Props, State> {
           <p style={{ fontSize: '1.1rem', marginBottom: '1.5rem', opacity: 0.8 }}>
             Ocorreu um erro inesperado na aplicação.
           </p>
-          <p style={{ fontSize: '0.85rem', marginBottom: '2rem', opacity: 0.5, maxWidth: '500px' }}>
-            {this.state.error?.message}
-          </p>
+          <div style={{
+            fontSize: '0.8rem',
+            marginBottom: '2rem',
+            opacity: 0.7,
+            maxWidth: '700px',
+            textAlign: 'left',
+            background: 'rgba(0,0,0,0.3)',
+            padding: '1rem',
+            borderRadius: '0.5rem',
+            overflow: 'auto',
+            maxHeight: '300px',
+            width: '100%',
+          }}>
+            <p style={{ color: '#f87171', marginBottom: '0.5rem', fontWeight: 'bold' }}>
+              {this.state.error?.toString()}
+            </p>
+            {this.state.errorInfo && (
+              <pre style={{ whiteSpace: 'pre-wrap', fontSize: '0.75rem', color: '#94a3b8' }}>
+                {this.state.errorInfo.componentStack}
+              </pre>
+            )}
+          </div>
           <button
             onClick={() => window.location.reload()}
             style={{

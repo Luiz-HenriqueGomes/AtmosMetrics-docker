@@ -67,8 +67,9 @@ export default function DashboardPage() {
           api.getClimaExtremas({ limit: 500 }),
           api.getResumoClima()
         ]);
-        setAnomalias(extremas);
-        setResumoClima(clima);
+        // Protege contra respostas inesperadas da API
+        setAnomalias(Array.isArray(extremas) ? extremas : []);
+        setResumoClima(clima && typeof clima === 'object' && 'total_registros' in clima ? clima : null);
       } catch {
         setError('Não foi possível carregar os dados climáticos. Execute o ETL ou verifique a API.');
       }
