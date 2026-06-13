@@ -18,28 +18,12 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Create and start virtual environment
+      - name: Create virtual environment and install dependencies
         run: |
+          cd backend
           python -m venv antenv
           source antenv/bin/activate
-
-      - name: Install dependencies
-        run: |
-          source antenv/bin/activate
-          cd backend
           pip install -r requirements.txt
-
-      # O startup.sh diz ao Azure como iniciar a app corretamente
-      - name: Create startup script
-        run: |
-          cat > backend/startup.sh << 'EOF'
-          #!/bin/bash
-          cd /home/site/wwwroot
-          source antenv/bin/activate 2>/dev/null || true
-          export PYTHONPATH=/home/site/wwwroot
-          exec uvicorn app.main:app --host 0.0.0.0 --port 8000
-          EOF
-          chmod +x backend/startup.sh
 
       - name: Upload artifact for deployment jobs
         uses: actions/upload-artifact@v4
@@ -72,4 +56,7 @@ jobs:
           slot-name: 'Production'
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE }}
           package: .
-          startup-command: 'bash /home/site/wwwroot/startup.sh'
+          # startup-command NAO funciona com publish profile auth.
+          # Configure o Startup Command diretamente no Azure Portal:
+          # App Service > Configuracao > Configuracoes Gerais > Comando de Inicializacao:
+          #   bash /home/site/wwwroot/startup.sh
