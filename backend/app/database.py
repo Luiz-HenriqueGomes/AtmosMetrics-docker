@@ -11,7 +11,7 @@ from app.config import get_settings
 
 settings = get_settings()
 
-# Engine de conexão com o PostgreSQL
+# Engine de conexão com o banco de dados (Azure SQL Server)
 engine = create_engine(
     settings.database_url,
     pool_pre_ping=True,      # verifica a conexão antes de usar

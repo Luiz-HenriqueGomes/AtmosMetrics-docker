@@ -1,14 +1,14 @@
 -- ============================================================
--- AtmosMetrics — 02_populate.sql
+-- AtmosMetrics — 02_populate.sql (SQL Server / Azure SQL)
 -- Pré-população das Tabelas Dimensão
--- ============================================================
--- Este script é executado após o 01_schema.sql pelo Docker.
 -- ============================================================
 
 -- ============================================================
 -- SATÉLITES DO INPE (Programa Queimadas)
 -- ============================================================
-INSERT INTO dim_satelite (nome_satelite, agencia, descricao) VALUES
+INSERT INTO dim_satelite (nome_satelite, agencia, descricao)
+SELECT nome_satelite, agencia, descricao FROM (
+    VALUES
     ('AQUA_M-T',    'NASA/INPE', 'Satélite AQUA - sensor MODIS (passagem matutina). Referência histórica do INPE.'),
     ('AQUA_M-M',    'NASA/INPE', 'Satélite AQUA - sensor MODIS (passagem noturna).'),
     ('TERRA_M-T',   'NASA/INPE', 'Satélite TERRA - sensor MODIS (passagem matutina).'),
@@ -22,26 +22,24 @@ INSERT INTO dim_satelite (nome_satelite, agencia, descricao) VALUES
     ('MSG-03',      'EUMETSAT',  'Satélite Meteosat Third Generation da agência europeia EUMETSAT.'),
     ('METOP-B',     'EUMETSAT',  'Satélite MetOp-B polar com sensor AVHRR.'),
     ('METOP-C',     'EUMETSAT',  'Satélite MetOp-C polar com sensor AVHRR.')
-ON CONFLICT (nome_satelite) DO NOTHING;
+) AS t(nome_satelite, agencia, descricao)
+WHERE NOT EXISTS (SELECT 1 FROM dim_satelite s WHERE s.nome_satelite = t.nome_satelite);
 
 -- ============================================================
 -- ESTADOS BRASILEIROS + REGIÕES
--- (Usados para pré-popular dim_localidade com dados de biomas)
--- Nota: a lista completa de municípios virá via ETL.
--- Aqui inserimos um registro por estado como "placeholder",
--- para garantir que consultas por UF funcionem de imediato.
 -- ============================================================
 
--- Usamos uma tabela temporária para organizar o seed
-CREATE TEMP TABLE temp_estados (
+IF OBJECT_ID('tempdb..#temp_estados') IS NOT NULL
+    DROP TABLE #temp_estados;
+
+CREATE TABLE #temp_estados (
     uf      CHAR(2),
     estado  VARCHAR(50),
     regiao  VARCHAR(20),
-    bioma   VARCHAR(30)  -- Bioma predominante do estado
+    bioma   VARCHAR(30)
 );
 
-INSERT INTO temp_estados VALUES
--- NORTE
+INSERT INTO #temp_estados VALUES
 ('AC', 'Acre',            'Norte',        'Amazônia'),
 ('AM', 'Amazonas',        'Norte',        'Amazônia'),
 ('AP', 'Amapá',           'Norte',        'Amazônia'),
@@ -49,7 +47,6 @@ INSERT INTO temp_estados VALUES
 ('RO', 'Rondônia',        'Norte',        'Amazônia'),
 ('RR', 'Roraima',         'Norte',        'Amazônia'),
 ('TO', 'Tocantins',       'Norte',        'Cerrado'),
--- NORDESTE
 ('AL', 'Alagoas',         'Nordeste',     'Caatinga'),
 ('BA', 'Bahia',           'Nordeste',     'Caatinga'),
 ('CE', 'Ceará',           'Nordeste',     'Caatinga'),
@@ -59,38 +56,31 @@ INSERT INTO temp_estados VALUES
 ('PI', 'Piauí',           'Nordeste',     'Caatinga'),
 ('RN', 'Rio Grande do Norte', 'Nordeste', 'Caatinga'),
 ('SE', 'Sergipe',         'Nordeste',     'Caatinga'),
--- CENTRO-OESTE
 ('DF', 'Distrito Federal','Centro-Oeste', 'Cerrado'),
 ('GO', 'Goiás',           'Centro-Oeste', 'Cerrado'),
 ('MS', 'Mato Grosso do Sul','Centro-Oeste','Pantanal'),
 ('MT', 'Mato Grosso',     'Centro-Oeste', 'Cerrado'),
--- SUDESTE
 ('ES', 'Espírito Santo',  'Sudeste',      'Mata Atlântica'),
 ('MG', 'Minas Gerais',    'Sudeste',      'Cerrado'),
 ('RJ', 'Rio de Janeiro',  'Sudeste',      'Mata Atlântica'),
 ('SP', 'São Paulo',       'Sudeste',      'Mata Atlântica'),
--- SUL
 ('PR', 'Paraná',          'Sul',          'Mata Atlântica'),
 ('RS', 'Rio Grande do Sul','Sul',         'Pampa'),
 ('SC', 'Santa Catarina',  'Sul',          'Mata Atlântica');
 
--- Insere um registro de localidade genérico por estado
--- (município = 'N/I' = Não Identificado). O ETL vai inserir os reais.
 INSERT INTO dim_localidade (municipio, uf, estado, regiao, bioma)
 SELECT
     'Não Identificado' AS municipio,
     uf, estado, regiao, bioma
-FROM temp_estados
-ON CONFLICT DO NOTHING;
+FROM #temp_estados t
+WHERE NOT EXISTS (
+    SELECT 1 FROM dim_localidade l 
+    WHERE l.municipio = 'Não Identificado' AND l.uf = t.uf
+);
 
-DROP TABLE temp_estados;
+DROP TABLE #temp_estados;
 
 -- ============================================================
 -- Mensagem de confirmação
 -- ============================================================
-DO $$
-BEGIN
-    RAISE NOTICE '✅ AtmosMetrics: Dimensões pré-populadas com sucesso!';
-    RAISE NOTICE '   Satélites carregados: %', (SELECT COUNT(*) FROM dim_satelite);
-    RAISE NOTICE '   Localidades base carregadas: %', (SELECT COUNT(*) FROM dim_localidade);
-END $$;
+PRINT '✅ AtmosMetrics: Dimensões pré-populadas com sucesso!';
