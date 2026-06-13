@@ -41,7 +41,7 @@ app = FastAPI(
     ),
     version="2.0.0",
     contact={
-        "name": "Luiz Henrique Gomes de Oliveira & Kaio Correia",
+        "name": "Luiz Henrique Gomes de Oliveira & Luiz Hélio Fim Filho",
     },
     lifespan=lifespan,
 )

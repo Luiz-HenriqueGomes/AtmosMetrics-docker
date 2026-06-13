@@ -48,13 +48,15 @@ BEGIN
     CREATE TABLE dim_localidade (
         id_localidade   INT IDENTITY(1,1) PRIMARY KEY,
         municipio       VARCHAR(100) NOT NULL,
-        codigo_ibge     VARCHAR(7)   UNIQUE, -- Código IBGE do município (7 dígitos)
+        codigo_ibge     VARCHAR(7), -- Código IBGE (sem UNIQUE inline devido aos NULLs do SQL Server)
         uf              CHAR(2)      NOT NULL,
         estado          VARCHAR(50)  NOT NULL,
         regiao          VARCHAR(20)  NOT NULL CHECK (regiao IN ('Norte', 'Nordeste', 'Centro-Oeste', 'Sudeste', 'Sul')),
         bioma           VARCHAR(30)  NOT NULL
     );
 
+    -- Índice ÚNICO filtrado que permite múltiplos NULLs no SQL Server
+    CREATE UNIQUE NONCLUSTERED INDEX idx_localidade_ibge ON dim_localidade(codigo_ibge) WHERE codigo_ibge IS NOT NULL;
     CREATE INDEX idx_localidade_uf     ON dim_localidade(uf);
     CREATE INDEX idx_localidade_bioma  ON dim_localidade(bioma);
     CREATE INDEX idx_localidade_regiao ON dim_localidade(regiao);

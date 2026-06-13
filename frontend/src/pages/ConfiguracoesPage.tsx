@@ -281,7 +281,7 @@ export default function ConfiguracoesPage() {
           </div>
           <div className="about-item">
             <span className="about-label">Desenvolvedores</span>
-            <span className="about-value">Luiz Henrique Gomes de Oliveira · Kaio Correia</span>
+            <span className="about-value">Luiz Henrique Gomes de Oliveira · Luiz Hélio Fim Filho</span>
           </div>
           <div className="about-item">
             <span className="about-label">Stack</span>
