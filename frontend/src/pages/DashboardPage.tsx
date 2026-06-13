@@ -154,13 +154,12 @@ export default function DashboardPage() {
         }}
       >
         <Popup className="custom-popup">
-          <div style={{ textAlign: 'center', minWidth: '120px' }}>
-            <strong style={{ fontSize: '14px' }}>{getLocationLabel(foco)}</strong>
-            <div style={{ marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-              Temp Atual: {String(foco.temperatura_media)}°C<br/>
-              Mín/Máx: {String(foco.temperatura_min)}°C / {String(foco.temperatura_max)}°C<br/>
-              Umidade: {String(foco.umidade_media)}%<br/>
-              Data: {String(foco.data_completa)}
+          <div style={{ textAlign: 'center', minWidth: '130px' }}>
+            <strong style={{ fontSize: '14px', display: 'block', paddingBottom: '4px', marginBottom: '4px', borderBottom: '1px solid #e2e8f0' }}>{getLocationLabel(foco)}</strong>
+            <div style={{ fontSize: '13px', lineHeight: '1.4' }}>
+              <div><strong>Atual:</strong> {String(foco.temperatura_media)}°C</div>
+              <div><strong>Mín/Máx:</strong> {String(foco.temperatura_min)}°C / {String(foco.temperatura_max)}°C</div>
+              <div><strong>Umidade:</strong> {String(foco.umidade_media)}%</div>
             </div>
           </div>
         </Popup>
@@ -184,13 +183,14 @@ export default function DashboardPage() {
         }}
       >
         <Popup className="custom-popup">
-          <div style={{ textAlign: 'center', minWidth: '120px' }}>
-            <strong style={{ fontSize: '14px' }}>{getLocationLabel(foco)}</strong>
-            <div style={{ marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '4px', color: '#ef4444' }}>
-              <strong>🔥 Foco de Calor (INPE/FIRMS)</strong>
-              Data: {String(foco.data_completa)}<br/>
-              Satélite: {String(foco.nome_satelite)}<br/>
-              {foco.frp_megawatts && `FRP: ${foco.frp_megawatts} MW`}
+          <div style={{ textAlign: 'center', minWidth: '130px' }}>
+            <strong style={{ fontSize: '14px', display: 'block', paddingBottom: '4px', marginBottom: '4px', borderBottom: '1px solid #fca5a5', color: '#ef4444' }}>
+              🔥 {getLocationLabel(foco)}
+            </strong>
+            <div style={{ fontSize: '13px', lineHeight: '1.4' }}>
+              <div><strong>Foco de Calor</strong></div>
+              <div><strong>Satélite:</strong> {String(foco.nome_satelite)}</div>
+              {foco.frp_megawatts && <div><strong>FRP:</strong> {foco.frp_megawatts} MW</div>}
             </div>
           </div>
         </Popup>
@@ -226,8 +226,8 @@ export default function DashboardPage() {
       <div className="stat-grid">
         <StatCard
           label="Regiões Monitoradas"
-          value={resumoClima?.total_registros ?? 0}
-          sub="🌍 Locais com dados climáticos"
+          value={(resumoClima?.total_registros ?? 0) + focosCalor.length}
+          sub="🌍 Locais com dados climáticos e alertas"
           icon={MapPin}
           accent="var(--accent)"
           iconBg="rgba(59,130,246,0.12)"
@@ -289,14 +289,13 @@ export default function DashboardPage() {
                   position={[parseFloat(activeFoco.latitude), parseFloat(activeFoco.longitude)]}
                   className="custom-popup"
                 >
-                  <div style={{ textAlign: 'center', minWidth: '120px' }}>
-                    <strong style={{ fontSize: '14px' }}>{getLocationLabel(activeFoco)}</strong>
-                    <div style={{ marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                    Temp Atual: {String(activeFoco.temperatura_media)}°C<br/>
-                    Mín/Máx: {String(activeFoco.temperatura_min)}°C / {String(activeFoco.temperatura_max)}°C<br/>
-                    Umidade: {String(activeFoco.umidade_media)}%<br/>
-                    Data: {String(activeFoco.data_completa)}
-                  </div>
+                  <div style={{ textAlign: 'center', minWidth: '130px' }}>
+                    <strong style={{ fontSize: '14px', display: 'block', paddingBottom: '4px', marginBottom: '4px', borderBottom: '1px solid #e2e8f0' }}>{getLocationLabel(activeFoco)}</strong>
+                    <div style={{ fontSize: '13px', lineHeight: '1.4' }}>
+                      <div><strong>Atual:</strong> {String(activeFoco.temperatura_media)}°C</div>
+                      <div><strong>Mín/Máx:</strong> {String(activeFoco.temperatura_min)}°C / {String(activeFoco.temperatura_max)}°C</div>
+                      <div><strong>Umidade:</strong> {String(activeFoco.umidade_media)}%</div>
+                    </div>
                   </div>
                 </Popup>
               )}
