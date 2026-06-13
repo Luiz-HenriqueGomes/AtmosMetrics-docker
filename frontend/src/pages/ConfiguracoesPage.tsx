@@ -102,17 +102,10 @@ export default function ConfiguracoesPage() {
           disabled={state.status === 'loading' || !state.date}
           style={accentColor && state.status !== 'loading' ? { background: `linear-gradient(135deg, ${accentColor}, ${accentColor}cc)` } : {}}
         >
-          {state.status === 'loading' ? (
-            <>
-              <Loader2 size={14} className="spin" />
-              Processando...
-            </>
-          ) : (
-            <>
-              <Play size={14} />
-              Executar ETL
-            </>
-          )}
+          <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', pointerEvents: 'none' }}>
+            {state.status === 'loading' ? <Loader2 size={14} className="spin" /> : <Play size={14} />}
+            <span>{state.status === 'loading' ? 'Processando...' : 'Executar ETL'}</span>
+          </span>
         </button>
       </div>
 
