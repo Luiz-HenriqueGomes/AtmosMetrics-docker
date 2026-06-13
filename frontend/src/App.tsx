@@ -51,6 +51,9 @@ export default function App() {
     api.getHealth()
       .then(data => setApiStatus(data.banco === 'conectado' ? 'online' : 'offline'))
       .catch(() => setApiStatus('offline'));
+      
+    // Executa a ETL global automaticamente em background
+    api.executarETLGlobal().catch(err => console.error("Erro no ETL automático:", err));
   }, []);
 
   const toggleTheme = () => setTheme(prev => prev === 'light' ? 'dark' : 'light');
