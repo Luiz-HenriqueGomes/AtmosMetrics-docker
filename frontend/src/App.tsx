@@ -1,12 +1,10 @@
 import { useState, useEffect, Suspense, lazy } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
 import Sidebar from './components/Sidebar';
 import CustomCursor from './components/CustomCursor';
 import { api } from './services/api';
 import './App.css';
 
 // Lazy loading — cada página só é carregada quando necessária.
-// Isso evita que um erro de importação em uma página derrube o app inteiro.
 const DashboardPage = lazy(() => import('./pages/DashboardPage'));
 const FocosPage = lazy(() => import('./pages/FocosPage'));
 const QualidadeArPage = lazy(() => import('./pages/QualidadeArPage'));
@@ -25,7 +23,7 @@ function PageLoader() {
       fontSize: '0.9rem',
       gap: '0.5rem',
     }}>
-      <div className="loading-spinner" style={{
+      <div style={{
         width: '20px',
         height: '20px',
         border: '2px solid var(--border)',
@@ -85,20 +83,15 @@ export default function App() {
         toggleTheme={toggleTheme}
       />
       <main className="app-main">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={activePage}
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -15 }}
-            transition={{ duration: 0.3, ease: 'easeOut' }}
-            style={{ width: '100%', height: '100%' }}
-          >
-            <Suspense fallback={<PageLoader />}>
-              {renderPage()}
-            </Suspense>
-          </motion.div>
-        </AnimatePresence>
+        <div
+          key={activePage}
+          className="page-transition"
+          style={{ width: '100%', height: '100%' }}
+        >
+          <Suspense fallback={<PageLoader />}>
+            {renderPage()}
+          </Suspense>
+        </div>
       </main>
     </div>
   );
