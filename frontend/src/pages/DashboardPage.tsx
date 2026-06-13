@@ -39,9 +39,6 @@ const MapController = ({ center, zoom }: { center: [number, number] | null, zoom
 const getTempColor = (temp: number) => {
   if (temp <= 20) return '#3b82f6'; // Azul
   if (temp >= 28) return '#ef4444'; // Vermelho
-  
-  // Para temperaturas entre 20 e 28 (que estavam ficando rosa/brancas), 
-  // usamos diretamente o Laranja. Assim evitamos qualquer tom indesejado gerado pela mistura.
   return '#f59e0b'; // Laranja
 };
 
@@ -50,19 +47,16 @@ const getTempColor = (temp: number) => {
 export default function DashboardPage() {
   const [anomalias, setAnomalias] = useState<ClimaItem[]>([]);
   const [resumoClima, setResumoClima] = useState<ResumoClimaResponse | null>(null);
-  // resumoAr removed as it was unused
   const [mapFocus, setMapFocus] = useState<[number, number] | null>(null);
   const [activeFoco, setActiveFoco] = useState<ClimaItem | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Carrega todas as fontes de dados independentemente
     const loadData = async () => {
       setLoading(true);
       setError(null);
 
-      // Dados de clima (Open-Meteo) para o mapa e métricas
       try {
         const [extremas, clima] = await Promise.all([
           api.getClimaExtremas({ limit: 500 }),
@@ -75,7 +69,6 @@ export default function DashboardPage() {
         setError('Não foi possível carregar os dados climáticos. Execute o ETL ou verifique a API.');
       }
 
-      // Dados de qualidade do ar (OpenWeatherMap)
       try {
         await api.getResumoQualidadeAr();
       } catch {
@@ -136,7 +129,41 @@ export default function DashboardPage() {
       return diffB - diffA;
     })[0];
 
-  // aqiValue was removed because it is unused
+  // ⬇️ useMemo no TOPO DO COMPONENTE (não dentro de JSX condicional!)
+  // Isso garante que o hook é chamado em TODAS as renders, respeitando as Rules of Hooks.
+  const mapMarkers = useMemo(() => anomalias.map(foco => {
+    if (!foco.latitude || !foco.longitude) return null;
+    const temp = Number(foco.temperatura_media);
+    const color = getTempColor(temp);
+    const radius = Math.max(6, Math.min(18, Math.abs(temp - 20) / 2));
+    
+    return (
+      <CircleMarker
+        key={`clima-${foco.id_clima}`}
+        center={[parseFloat(foco.latitude), parseFloat(foco.longitude)]}
+        radius={radius}
+        pathOptions={{ 
+          color: '#ffffff',
+          opacity: 0.6,
+          fillColor: color, 
+          fillOpacity: 0.85, 
+          weight: 1.5
+        }}
+      >
+        <Popup className="custom-popup">
+          <div style={{ textAlign: 'center', minWidth: '120px' }}>
+            <strong style={{ fontSize: '14px' }}>{getLocationLabel(foco)}</strong>
+            <div style={{ marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              Temp Atual: {String(foco.temperatura_media)}°C<br/>
+              Mín/Máx: {String(foco.temperatura_min)}°C / {String(foco.temperatura_max)}°C<br/>
+              Umidade: {String(foco.umidade_media)}%<br/>
+              Data: {String(foco.data_completa)}
+            </div>
+          </div>
+        </Popup>
+      </CircleMarker>
+    );
+  }), [anomalias]);
 
   return (
     <div className="dashboard">
@@ -232,48 +259,16 @@ export default function DashboardPage() {
                   <div style={{ textAlign: 'center', minWidth: '120px' }}>
                     <strong style={{ fontSize: '14px' }}>{getLocationLabel(activeFoco)}</strong>
                     <div style={{ marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                    Temp Atual: {activeFoco.temperatura_media}°C<br/>
-                    Mín/Máx: {activeFoco.temperatura_min}°C / {activeFoco.temperatura_max}°C<br/>
-                    Umidade: {activeFoco.umidade_media}%<br/>
-                    Data: {activeFoco.data_completa}
+                    Temp Atual: {String(activeFoco.temperatura_media)}°C<br/>
+                    Mín/Máx: {String(activeFoco.temperatura_min)}°C / {String(activeFoco.temperatura_max)}°C<br/>
+                    Umidade: {String(activeFoco.umidade_media)}%<br/>
+                    Data: {String(activeFoco.data_completa)}
                   </div>
                   </div>
                 </Popup>
               )}
 
-              {useMemo(() => anomalias.map(foco => {
-                if (!foco.latitude || !foco.longitude) return null;
-                const temp = Number(foco.temperatura_media);
-                const color = getTempColor(temp);
-                const radius = Math.max(6, Math.min(18, Math.abs(temp - 20) / 2));
-                
-                return (
-                  <CircleMarker
-                    key={`clima-${foco.id_clima}`}
-                    center={[parseFloat(foco.latitude), parseFloat(foco.longitude)]}
-                    radius={radius}
-                    pathOptions={{ 
-                      color: '#ffffff',
-                      opacity: 0.6,
-                      fillColor: color, 
-                      fillOpacity: 0.85, 
-                      weight: 1.5
-                    }}
-                  >
-                    <Popup className="custom-popup">
-                      <div style={{ textAlign: 'center', minWidth: '120px' }}>
-                        <strong style={{ fontSize: '14px' }}>{getLocationLabel(foco)}</strong>
-                        <div style={{ marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                          Temp Atual: {foco.temperatura_media}°C<br/>
-                          Mín/Máx: {foco.temperatura_min}°C / {foco.temperatura_max}°C<br/>
-                          Umidade: {foco.umidade_media}%<br/>
-                          Data: {foco.data_completa}
-                        </div>
-                      </div>
-                    </Popup>
-                  </CircleMarker>
-                );
-              }), [anomalias])}
+              {mapMarkers}
             </MapContainer>
           </MapErrorBoundary>
         )}
@@ -310,7 +305,7 @@ export default function DashboardPage() {
                     {getLocationLabel(item)}
                   </span>
                   <span className="rank-value" style={{ color: '#ef4444', fontWeight: 'bold' }}>
-                    {item.temperatura_max}°C
+                    {String(item.temperatura_max)}°C
                   </span>
                 </div>
               ))}
@@ -347,7 +342,7 @@ export default function DashboardPage() {
                     {getLocationLabel(item)}
                   </span>
                   <span className="rank-value" style={{ color: '#3b82f6', fontWeight: 'bold' }}>
-                    {item.temperatura_min}°C
+                    {String(item.temperatura_min)}°C
                   </span>
                 </div>
               ))}
