@@ -4,7 +4,7 @@ import { MapContainer, TileLayer, Popup, useMap, CircleMarker } from 'react-leaf
 import 'leaflet/dist/leaflet.css';
 import StatCard from '../components/StatCard';
 import MapErrorBoundary from '../components/MapErrorBoundary';
-import { api, type ClimaItem, type ResumoClimaResponse } from '../services/api';
+import { api, type ClimaItem, type ResumoClimaResponse, type AnomaliaItem } from '../services/api';
 import './DashboardPage.css';
 
 // Utilitário para formatar nomes de localidades (Title Case)
@@ -46,6 +46,7 @@ const getTempColor = (temp: number) => {
 
 export default function DashboardPage() {
   const [anomalias, setAnomalias] = useState<ClimaItem[]>([]);
+  const [focosCalor, setFocosCalor] = useState<AnomaliaItem[]>([]);
   const [resumoClima, setResumoClima] = useState<ResumoClimaResponse | null>(null);
   const [mapFocus, setMapFocus] = useState<[number, number] | null>(null);
   const [activeFoco, setActiveFoco] = useState<ClimaItem | null>(null);
@@ -58,12 +59,14 @@ export default function DashboardPage() {
       setError(null);
 
       try {
-        const [extremas, clima] = await Promise.all([
+        const [extremas, clima, focos] = await Promise.all([
           api.getClimaExtremas({ limit: 500 }),
-          api.getResumoClima()
+          api.getResumoClima(),
+          api.getAnomalias({ limit: 1000 })
         ]);
         // Protege contra respostas inesperadas da API
         setAnomalias(Array.isArray(extremas) ? extremas : []);
+        setFocosCalor(Array.isArray(focos) ? focos : []);
         setResumoClima(clima && typeof clima === 'object' && 'total_registros' in clima ? clima : null);
       } catch {
         setError('Não foi possível carregar os dados climáticos. Execute o ETL ou verifique a API.');
@@ -164,6 +167,36 @@ export default function DashboardPage() {
       </CircleMarker>
     );
   }), [anomalias]);
+
+  const focosMarkers = useMemo(() => focosCalor.map(foco => {
+    if (!foco.latitude || !foco.longitude) return null;
+    return (
+      <CircleMarker
+        key={`foco-${foco.id_anomalia}`}
+        center={[parseFloat(foco.latitude), parseFloat(foco.longitude)]}
+        radius={5}
+        pathOptions={{ 
+          color: '#ffffff',
+          opacity: 0.6,
+          fillColor: '#ef4444', 
+          fillOpacity: 0.9, 
+          weight: 1
+        }}
+      >
+        <Popup className="custom-popup">
+          <div style={{ textAlign: 'center', minWidth: '120px' }}>
+            <strong style={{ fontSize: '14px' }}>{getLocationLabel(foco)}</strong>
+            <div style={{ marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '4px', color: '#ef4444' }}>
+              <strong>🔥 Foco de Calor (INPE/FIRMS)</strong>
+              Data: {String(foco.data_completa)}<br/>
+              Satélite: {String(foco.nome_satelite)}<br/>
+              {foco.frp_megawatts && `FRP: ${foco.frp_megawatts} MW`}
+            </div>
+          </div>
+        </Popup>
+      </CircleMarker>
+    );
+  }), [focosCalor]);
 
   return (
     <div className="dashboard">
@@ -269,6 +302,7 @@ export default function DashboardPage() {
               )}
 
               {mapMarkers}
+              {focosMarkers}
             </MapContainer>
           </MapErrorBoundary>
         )}
