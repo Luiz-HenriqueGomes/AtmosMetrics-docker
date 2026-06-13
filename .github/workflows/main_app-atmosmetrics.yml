@@ -21,7 +21,7 @@ jobs:
       - name: Install dependencies
         run: |
           cd backend
-          pip install -r requirements.txt --target=".python_packages/lib/site-packages"
+          pip install -r requirements.txt --target="python_packages/lib/site-packages"
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -34,6 +34,11 @@ jobs:
           npm install
           npm run build
 
+      - name: Fix startup.sh line endings
+        run: |
+          sed -i 's/\r$//' backend/startup.sh
+          chmod +x backend/startup.sh
+
       - name: Upload artifact for deployment jobs
         uses: actions/upload-artifact@v4
         with:
@@ -42,6 +47,7 @@ jobs:
             backend/
             !backend/**/__pycache__
             !backend/**/*.pyc
+          include-hidden-files: true
 
   deploy:
     runs-on: ubuntu-latest
@@ -64,8 +70,4 @@ jobs:
           app-name: 'app-atmosmetrics'
           slot-name: 'Production'
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE }}
-          package: backend
-          # startup-command NAO funciona com publish profile auth.
-          # Configure o Startup Command diretamente no Azure Portal:
-          # App Service > Configuracao > Configuracoes Gerais > Comando de Inicializacao:
-          #   bash /home/site/wwwroot/startup.sh
+          package: .
