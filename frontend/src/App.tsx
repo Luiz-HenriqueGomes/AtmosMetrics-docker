@@ -1,15 +1,42 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense, lazy } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import Sidebar from './components/Sidebar';
-import DashboardPage from './pages/DashboardPage';
-import FocosPage from './pages/FocosPage';
-import QualidadeArPage from './pages/QualidadeArPage';
-import LocalidadesPage from './pages/LocalidadesPage';
-import SatelitesPage from './pages/SatelitesPage';
-import ConfiguracoesPage from './pages/ConfiguracoesPage';
 import CustomCursor from './components/CustomCursor';
 import { api } from './services/api';
 import './App.css';
+
+// Lazy loading — cada página só é carregada quando necessária.
+// Isso evita que um erro de importação em uma página derrube o app inteiro.
+const DashboardPage = lazy(() => import('./pages/DashboardPage'));
+const FocosPage = lazy(() => import('./pages/FocosPage'));
+const QualidadeArPage = lazy(() => import('./pages/QualidadeArPage'));
+const LocalidadesPage = lazy(() => import('./pages/LocalidadesPage'));
+const SatelitesPage = lazy(() => import('./pages/SatelitesPage'));
+const ConfiguracoesPage = lazy(() => import('./pages/ConfiguracoesPage'));
+
+function PageLoader() {
+  return (
+    <div style={{
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      height: '100%',
+      color: 'var(--text-muted)',
+      fontSize: '0.9rem',
+      gap: '0.5rem',
+    }}>
+      <div className="loading-spinner" style={{
+        width: '20px',
+        height: '20px',
+        border: '2px solid var(--border)',
+        borderTop: '2px solid var(--accent)',
+        borderRadius: '50%',
+        animation: 'spin 0.8s linear infinite',
+      }} />
+      Carregando...
+    </div>
+  );
+}
 
 export default function App() {
   const [activePage, setActivePage] = useState('dashboard');
@@ -67,7 +94,9 @@ export default function App() {
             transition={{ duration: 0.3, ease: 'easeOut' }}
             style={{ width: '100%', height: '100%' }}
           >
-            {renderPage()}
+            <Suspense fallback={<PageLoader />}>
+              {renderPage()}
+            </Suspense>
           </motion.div>
         </AnimatePresence>
       </main>

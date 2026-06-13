@@ -3,6 +3,7 @@ import { MapPin, AlertCircle, Thermometer, ThermometerSun, Snowflake } from 'luc
 import { MapContainer, TileLayer, Popup, useMap, CircleMarker } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import StatCard from '../components/StatCard';
+import MapErrorBoundary from '../components/MapErrorBoundary';
 import { api, type ClimaItem, type ResumoClimaResponse } from '../services/api';
 import './DashboardPage.css';
 
@@ -208,73 +209,73 @@ export default function DashboardPage() {
             Carregando mapa...
           </div>
         ) : (
-          <MapContainer 
-            preferCanvas={true}
-            center={[20, 0]} 
-            zoom={2.5} 
-            minZoom={2}
-            style={{ height: '100%', width: '100%', zIndex: 0, background: '#1e293b' }}
-          >
-            <MapController center={mapFocus} zoom={6} />
-            <TileLayer
-              url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
-              attribution='&copy; Esri'
-              className="map-tiles-dark-overlay"
-            />
+          <MapErrorBoundary fallbackHeight="450px">
+            <MapContainer 
+              preferCanvas={true}
+              center={[20, 0]} 
+              zoom={2.5} 
+              minZoom={2}
+              style={{ height: '100%', width: '100%', zIndex: 0, background: '#1e293b' }}
+            >
+              <MapController center={mapFocus} zoom={6} />
+              <TileLayer
+                url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+                attribution='&copy; Esri'
+                className="map-tiles-dark-overlay"
+              />
 
-            {activeFoco && activeFoco.latitude && activeFoco.longitude && (
-              <Popup 
-                position={[parseFloat(activeFoco.latitude), parseFloat(activeFoco.longitude)]}
-                className="custom-popup"
-              >
-                <div style={{ textAlign: 'center', minWidth: '120px' }}>
-                  <strong style={{ fontSize: '14px' }}>{getLocationLabel(activeFoco)}</strong>
-                  <div style={{ marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                  Temp Atual: {activeFoco.temperatura_media}°C<br/>
-                  Mín/Máx: {activeFoco.temperatura_min}°C / {activeFoco.temperatura_max}°C<br/>
-                  Umidade: {activeFoco.umidade_media}%<br/>
-                  Data: {activeFoco.data_completa}
-                </div>
-                </div>
-              </Popup>
-            )}
-
-            {useMemo(() => anomalias.map(foco => {
-              if (!foco.latitude || !foco.longitude) return null;
-              
-              // Determinar o quão extremo é para o tamanho e cor do ponto
-              const temp = Number(foco.temperatura_media);
-              const color = getTempColor(temp);
-              const radius = Math.max(6, Math.min(18, Math.abs(temp - 20) / 2)); // Raio proporcional ajustado
-              
-              return (
-                <CircleMarker
-                  key={`clima-${foco.id_clima}`}
-                  center={[parseFloat(foco.latitude), parseFloat(foco.longitude)]}
-                  radius={radius}
-                  pathOptions={{ 
-                    color: '#ffffff',
-                    opacity: 0.6,
-                    fillColor: color, 
-                    fillOpacity: 0.85, 
-                    weight: 1.5
-                  }}
+              {activeFoco && activeFoco.latitude && activeFoco.longitude && (
+                <Popup 
+                  position={[parseFloat(activeFoco.latitude), parseFloat(activeFoco.longitude)]}
+                  className="custom-popup"
                 >
-                  <Popup className="custom-popup">
-                    <div style={{ textAlign: 'center', minWidth: '120px' }}>
-                      <strong style={{ fontSize: '14px' }}>{getLocationLabel(foco)}</strong>
-                      <div style={{ marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                        Temp Atual: {foco.temperatura_media}°C<br/>
-                        Mín/Máx: {foco.temperatura_min}°C / {foco.temperatura_max}°C<br/>
-                        Umidade: {foco.umidade_media}%<br/>
-                        Data: {foco.data_completa}
+                  <div style={{ textAlign: 'center', minWidth: '120px' }}>
+                    <strong style={{ fontSize: '14px' }}>{getLocationLabel(activeFoco)}</strong>
+                    <div style={{ marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    Temp Atual: {activeFoco.temperatura_media}°C<br/>
+                    Mín/Máx: {activeFoco.temperatura_min}°C / {activeFoco.temperatura_max}°C<br/>
+                    Umidade: {activeFoco.umidade_media}%<br/>
+                    Data: {activeFoco.data_completa}
+                  </div>
+                  </div>
+                </Popup>
+              )}
+
+              {useMemo(() => anomalias.map(foco => {
+                if (!foco.latitude || !foco.longitude) return null;
+                const temp = Number(foco.temperatura_media);
+                const color = getTempColor(temp);
+                const radius = Math.max(6, Math.min(18, Math.abs(temp - 20) / 2));
+                
+                return (
+                  <CircleMarker
+                    key={`clima-${foco.id_clima}`}
+                    center={[parseFloat(foco.latitude), parseFloat(foco.longitude)]}
+                    radius={radius}
+                    pathOptions={{ 
+                      color: '#ffffff',
+                      opacity: 0.6,
+                      fillColor: color, 
+                      fillOpacity: 0.85, 
+                      weight: 1.5
+                    }}
+                  >
+                    <Popup className="custom-popup">
+                      <div style={{ textAlign: 'center', minWidth: '120px' }}>
+                        <strong style={{ fontSize: '14px' }}>{getLocationLabel(foco)}</strong>
+                        <div style={{ marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                          Temp Atual: {foco.temperatura_media}°C<br/>
+                          Mín/Máx: {foco.temperatura_min}°C / {foco.temperatura_max}°C<br/>
+                          Umidade: {foco.umidade_media}%<br/>
+                          Data: {foco.data_completa}
+                        </div>
                       </div>
-                    </div>
-                  </Popup>
-                </CircleMarker>
-              );
-            }), [anomalias])}
-          </MapContainer>
+                    </Popup>
+                  </CircleMarker>
+                );
+              }), [anomalias])}
+            </MapContainer>
+          </MapErrorBoundary>
         )}
       </div>
 
